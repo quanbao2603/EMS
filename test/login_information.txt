@@ -1,0 +1,25 @@
+1. Nhóm Quyền Cao Nhất (Quản lý toàn bộ nhân sự - Phòng HR)
+Nhóm này có quyền xem lương, sửa thông tin nhân viên, và xem bảng Kiểm toán.
+
+Tên đăng nhập: hr.nguyen
+Mật khẩu: hashed_pw
+Vai trò: HR_MANAGER (Thuộc phòng HR)
+2. Nhóm Quyền Quản Lý Kế Toán (Data Redaction)
+Chỉ thấy dữ liệu của phòng Kế toán (ACC).
+
+Tên đăng nhập: acc.dinh
+Mật khẩu: hashed_pw
+Vai trò: ACCOUNTANT (Thuộc phòng ACC)
+3. Nhóm Quyền Quản Lý IT (Trưởng phòng IT)
+Chỉ thấy nhân viên phòng IT, nhưng được xem lương.
+
+Tên đăng nhập: it.vo
+Mật khẩu: hashed_pw
+Vai trò: MANAGER (Thuộc phòng IT)
+4. Nhóm Quyền Nhân Viên Tiêu Chuẩn (Không được xem lương)
+Nhóm này bị áp dụng quy tắc ẩn cột lương và chỉ thấy đồng nghiệp cùng phòng.
+
+Tên đăng nhập: it.ngo (Phòng IT)
+Tên đăng nhập: mkt.ma (Phòng Marketing)
+Mật khẩu chung: hashed_pw
+Vai trò: STAFF
