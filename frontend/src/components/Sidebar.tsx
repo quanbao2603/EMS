@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, Briefcase, ShieldAlert, LogOut, Shield } from 'lucide-react';
+import { Users, Briefcase, ShieldAlert, LogOut, Shield, History } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export function Sidebar() {
@@ -20,8 +20,9 @@ export function Sidebar() {
 
   const navItems = [
     { name: 'Nhân sự', href: '/employees', icon: Users, roles: ['STAFF', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ACCOUNTANT'] },
+    { name: 'Lịch sử thay đổi', href: '/employees/history', icon: History, roles: ['HR_MANAGER'] },
     { name: 'Dự án', href: '/projects', icon: Briefcase, roles: ['STAFF', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ACCOUNTANT'] },
-    { name: 'Kiểm toán', href: '/audit', icon: ShieldAlert, roles: ['HR_MANAGER'] },
+    { name: 'Giám sát HR', href: '/audit', icon: ShieldAlert, roles: ['HR_MANAGER'] },
   ];
 
   return (

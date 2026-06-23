@@ -43,7 +43,10 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
     e.preventDefault();
     if (!employee) return;
     setIsSubmitting(true);
-    await onSave(employee.maNV, formData);
+    // Chỉ gửi field luong nếu role được phép sửa, tránh bị Backend chặn 403
+    // dù người dùng không hề thay đổi mức lương (input chỉ bị disabled, giá trị cũ vẫn còn trong formData)
+    const payload = canEditSalary ? formData : { ...formData, luong: undefined };
+    await onSave(employee.maNV, payload);
     setIsSubmitting(false);
   };
 
