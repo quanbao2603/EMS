@@ -13,11 +13,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Pencil, History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
 import { EmployeeEditForm } from './EmployeeEditForm';
 import { RoleGuard } from './RoleGuard';
-import Link from 'next/link';
 
 export function EmployeeTable() {
   const { user } = useAuthStore();
@@ -77,17 +76,9 @@ export function EmployeeTable() {
                   )}
                   <RoleGuard allowedRoles={['HR_MANAGER', 'HR_STAFF']}>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedEmp(emp)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                          <Pencil className="w-4 h-4 mr-1" /> Sửa
-                        </Button>
-                        <Link 
-                          href={`/employees/${emp.maNV}/salary-history`}
-                          className={buttonVariants({ variant: "outline", size: "sm", className: "border-gray-700 text-blue-400 hover:bg-blue-900/30 hover:text-blue-300" })}
-                        >
-                          <History className="w-4 h-4 mr-1" /> Lịch sử
-                        </Link>
-                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setSelectedEmp(emp)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
+                        <Pencil className="w-4 h-4 mr-1" /> Sửa
+                      </Button>
                     </TableCell>
                   </RoleGuard>
                 </TableRow>
@@ -97,15 +88,15 @@ export function EmployeeTable() {
         </Table>
       </div>
 
-      <EmployeeEditForm 
-        employee={selectedEmp} 
-        onClose={() => setSelectedEmp(null)} 
+      <EmployeeEditForm
+        employee={selectedEmp}
+        onClose={() => setSelectedEmp(null)}
         onSave={async (id, data) => {
           const success = await updateEmployee(id, data);
           if (success) {
             setSelectedEmp(null);
           }
-        }} 
+        }}
       />
     </div>
   );

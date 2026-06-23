@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -11,5 +11,10 @@ export class EmployeesController {
   async findAll(@Req() req: any) {
     // req.user được Inject từ JwtStrategy
     return this.employeesService.findAll(req.user);
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    return this.employeesService.update(id, body, req.user);
   }
 }

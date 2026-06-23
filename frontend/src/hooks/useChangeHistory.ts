@@ -1,30 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import axiosClient from '@/utils/axiosClient';
 
-export interface AuditReportItem {
+export interface ChangeHistoryItem {
   timestamp: string;
   performedBy: string;
   maNV: string | null;
+  eventType: 'EDIT_INFO' | 'EDIT_SALARY';
   changeSummary: string;
+  oldValue?: string | null;
+  newValue?: string | null;
 }
 
-export function useAuditLogs() {
-  const [logs, setLogs] = useState<AuditReportItem[]>([]);
+export function useChangeHistory() {
+  const [history, setHistory] = useState<ChangeHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axiosClient.get('/audit/logs');
-      setLogs(res.data);
+      const res = await axiosClient.get('/audit/history');
+      setHistory(res.data);
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Không thể tải báo cáo giám sát';
+        'Không thể tải lịch sử thay đổi';
       setError(message);
-      setLogs([]);
+      setHistory([]);
       console.error(err);
     } finally {
       setLoading(false);
@@ -32,8 +35,8 @@ export function useAuditLogs() {
   }, []);
 
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    fetchHistory();
+  }, [fetchHistory]);
 
-  return { logs, loading, error, refetch: fetchLogs };
+  return { history, loading, error, refetch: fetchHistory };
 }
