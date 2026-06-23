@@ -5,13 +5,14 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule, 
     AuthModule, 
-    EmployeesModule
+    EmployeesModule, ProjectsModule
   ],
   controllers: [AppController],
   providers: [AppService],

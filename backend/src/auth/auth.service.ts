@@ -26,12 +26,16 @@ export class AuthService {
         throw new UnauthorizedException('Mật khẩu không chính xác');
       }
 
+      if (!user.MAPB) {
+        throw new UnauthorizedException('Không thể xác định phòng ban của user. Cấu hình VPD chặn!');
+      }
+
       // 3. Khởi tạo Token (Nghiệp vụ)
       const payload = { 
         userId: user.ID_USER, 
         username: user.USERNAME, 
         role: user.ROLE_NAME,
-        maPB: user.MAPB || 'IT'
+        maPB: user.MAPB
       };
       
       return {
