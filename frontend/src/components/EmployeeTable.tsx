@@ -25,7 +25,7 @@ export function EmployeeTable() {
 
   if (!user) return null;
 
-  const canViewSalary = user.role !== 'STAFF';
+  const canViewSalary = user.role !== 'STAFF' && user.role !== 'HR_STAFF';
 
   return (
     <div className="bg-gray-900 rounded-md border border-gray-800 p-4">

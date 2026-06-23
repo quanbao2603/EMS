@@ -11,22 +11,8 @@ export class EmployeesService {
     private readonly oracleSecurityService: OracleSecurityService,
   ) {}
 
-  private async setSecurityContext(connection: any, user: any) {
-    // 1. ĐỒNG BỘ: Thiết lập Ngữ cảnh Định danh (VPD Context) + CLIENT_IDENTIFIER (cho FGA)
-    await connection.execute(
-      `BEGIN pkg_sec_admin.set_context(:id, :role, :mapb); END;`,
-      {
-        id: user.userId,
-        role: user.role,
-        mapb: user.maPB,
-      }
-    );
-
-    // 2. ĐỒNG BỘ: Thiết lập Nhãn bảo mật (OLS)
-    let label = 'PUB';
-    if (['HR_MANAGER', 'MANAGER'].includes(user.role)) label = 'SEC';
-    else if (['HR_STAFF', 'ACCOUNTANT'].includes(user.role)) label = 'CONF';
-
+  async findAll(user: any) {
+    const connection = await this.dbService.getConnection();
     try {
       // 1. Áp dụng chính sách bảo mật gốc của Oracle (Context/OLS)
       await this.oracleSecurityService.applySecurityPolicies(connection, user);
@@ -50,7 +36,7 @@ export class EmployeesService {
 
     const connection = await this.dbService.getConnection();
     try {
-      await this.setSecurityContext(connection, user);
+      await this.oracleSecurityService.applySecurityPolicies(connection, user);
 
       // FGA policy FGA_HR_EDIT_NHANVIEN sẽ tự động ghi log nếu Context ROLE = 'HR_STAFF'
       await connection.execute(

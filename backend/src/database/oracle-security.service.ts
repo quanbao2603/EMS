@@ -12,7 +12,7 @@ export class OracleSecurityService {
   async applySecurityPolicies(connection: oracledb.Connection, user: any): Promise<void> {
     // 1. Thiết lập Ngữ cảnh Định danh (VPD Context)
     await connection.execute(
-      `BEGIN pkg_sec_admin.set_context(:id, :role, :mapb); END;`,
+      `BEGIN EMS_ADMIN.pkg_sec_admin.set_context(:id, :role, :mapb); END;`,
       {
         id: user.userId,
         role: user.role,

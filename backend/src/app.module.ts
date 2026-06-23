@@ -14,7 +14,8 @@ import { ProjectsModule } from './projects/projects.module';
     DatabaseModule,
     AuthModule,
     EmployeesModule,
-    AuditModule
+    AuditModule,
+    ProjectsModule
   ],
   controllers: [AppController],
   providers: [AppService],

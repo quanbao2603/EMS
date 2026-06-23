@@ -19,7 +19,7 @@ export class ProjectsService {
       const sql = `
         SELECT MaDA "maDA", TenDA "tenDA", NganSach "nganSach", 
                TO_CHAR(NgayBatDau, 'YYYY-MM-DD') "ngayBatDau", TrangThai "trangThai" 
-        FROM DU_AN
+        FROM EMS_ADMIN.DU_AN
       `;
       const result = await connection.execute(sql, [], { outFormat: 4002 }); // oracledb.OUT_FORMAT_OBJECT = 4002
       return result.rows || [];

@@ -34,6 +34,7 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
   }, [employee]);
 
   const canEditSalary = user?.role === 'HR_MANAGER';
+  const canViewSalary = user?.role !== 'STAFF' && user?.role !== 'HR_STAFF';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -77,25 +78,27 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
               <Input id="maPB" name="maPB" value={formData.maPB || ''} onChange={handleChange} className="bg-gray-900 border-gray-800 text-white focus-visible:ring-blue-500" />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="luong" className="text-gray-300">Mức Lương (VND)</Label>
-              <div className="relative">
-                <Input
-                  id="luong"
-                  name="luong"
-                  type="number"
-                  value={formData.luong || ''}
-                  onChange={handleChange}
-                  disabled={!canEditSalary}
-                  className={`bg-gray-900 border-gray-800 text-white focus-visible:ring-blue-500 ${!canEditSalary ? 'opacity-50 cursor-not-allowed' : ''}`}
-                />
-                {!canEditSalary && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 flex items-center gap-1 text-xs font-semibold">
-                    <AlertCircle className="w-4 h-4" /> Chỉ Manager được sửa
-                  </div>
-                )}
+            {canViewSalary && (
+              <div className="space-y-2">
+                <Label htmlFor="luong" className="text-gray-300">Mức Lương (VND)</Label>
+                <div className="relative">
+                  <Input
+                    id="luong"
+                    name="luong"
+                    type="number"
+                    value={formData.luong || ''}
+                    onChange={handleChange}
+                    disabled={!canEditSalary}
+                    className={`bg-gray-900 border-gray-800 text-white focus-visible:ring-blue-500 ${!canEditSalary ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  />
+                  {!canEditSalary && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 flex items-center gap-1 text-xs font-semibold">
+                      <AlertCircle className="w-4 h-4" /> Chỉ Manager được sửa
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <SheetFooter className="mt-8">
