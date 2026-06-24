@@ -17,11 +17,13 @@ import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 import { EmployeeEditForm } from './EmployeeEditForm';
 import { RoleGuard } from './RoleGuard';
+import { SalaryHistoryDialog } from './SalaryHistoryDialog';
 
 export function EmployeeTable() {
   const { user } = useAuthStore();
   const { employees, loading, updateEmployee } = useEmployees();
   const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
+  const [historyEmp, setHistoryEmp] = useState<string | null>(null);
 
   if (!user) return null;
 
@@ -76,9 +78,16 @@ export function EmployeeTable() {
                   )}
                   <RoleGuard allowedRoles={['HR_MANAGER', 'HR_STAFF']}>
                     <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedEmp(emp)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
-                        <Pencil className="w-4 h-4 mr-1" /> Sửa
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedEmp(emp)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
+                          <Pencil className="w-4 h-4 mr-1" /> Sửa
+                        </Button>
+                        {user.role === 'HR_MANAGER' && (
+                          <Button variant="outline" size="sm" onClick={() => setHistoryEmp(emp.maNV)} className="border-gray-700 text-blue-400 hover:bg-blue-900/30">
+                            Lịch sử
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </RoleGuard>
                 </TableRow>
@@ -97,6 +106,11 @@ export function EmployeeTable() {
             setSelectedEmp(null);
           }
         }}
+      />
+
+      <SalaryHistoryDialog
+        maNV={historyEmp}
+        onClose={() => setHistoryEmp(null)}
       />
     </div>
   );

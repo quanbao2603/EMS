@@ -26,7 +26,10 @@ export function useEmployees() {
       return true;
     } catch (error: any) {
       if (error.response?.status === 403) {
-        triggerSecurityToast('Không có quyền cập nhật mức lương hoặc thông tin này.');
+        const msg = error.response.data?.message || 'Không có quyền cập nhật mức lương hoặc thông tin này.';
+        triggerSecurityToast(msg);
+      } else {
+        triggerSecurityToast(error.response?.data?.message || 'Lỗi hệ thống');
       }
       return false;
     }

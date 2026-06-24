@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
 import { AuditModule } from './audit/audit.module';
 import { ProjectsModule } from './projects/projects.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { ProjectsModule } from './projects/projects.module';
     AuthModule,
     EmployeesModule,
     AuditModule,
-    ProjectsModule
+    ProjectsModule,
+    AttendanceModule
   ],
   controllers: [AppController],
   providers: [AppService],

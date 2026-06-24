@@ -20,4 +20,10 @@ export class AuditController {
   async getFullHistory() {
     return this.auditService.getFullChangeHistory();
   }
+
+  @Get('system-logs')
+  @Roles('HR_MANAGER')
+  async getSystemAuditLogs() {
+    return this.auditService.getSystemAuditLogs();
+  }
 }

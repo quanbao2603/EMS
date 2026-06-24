@@ -20,6 +20,8 @@ export function Sidebar() {
 
   const navItems = [
     { name: 'Nhân sự', href: '/employees', icon: Users, roles: ['STAFF', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ACCOUNTANT'] },
+    { name: 'Bảng tính lương', href: '/payroll', icon: Users, roles: ['ACCOUNTANT'] },
+    { name: 'Chấm công', href: '/attendance', icon: History, roles: ['STAFF', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ACCOUNTANT'] },
     { name: 'Lịch sử thay đổi', href: '/employees/history', icon: History, roles: ['HR_MANAGER'] },
     { name: 'Dự án', href: '/projects', icon: Briefcase, roles: ['STAFF', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ACCOUNTANT'] },
     { name: 'Giám sát HR', href: '/audit', icon: ShieldAlert, roles: ['HR_MANAGER'] },

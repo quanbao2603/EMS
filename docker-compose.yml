@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  ems-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ems_backend
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_USER=ems_app_user
+      - DB_PASSWORD=EmsPassword2026
+      # Dùng host.docker.internal để trỏ về máy ảo Host (nơi Oracle đang chạy localhost:1521)
+      - DB_CONNECTION_STRING=host.docker.internal:1521/FREEPDB1
+      - JWT_SECRET=EMS_SUPER_SECRET_KEY_2026
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  ems-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ems_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+    depends_on:
+      - ems-backend
+    restart: unless-stopped

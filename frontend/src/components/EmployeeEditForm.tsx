@@ -33,7 +33,8 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
     }
   }, [employee]);
 
-  const canEditSalary = user?.role === 'HR_MANAGER';
+  // Cho phép edit form nếu là HR_MANAGER hoặc HR_STAFF. (HR_STAFF vẫn bị DB Trigger ORA-20403 chặn)
+  const canEditSalary = user?.role === 'HR_MANAGER' || user?.role === 'HR_STAFF';
   const canViewSalary = user?.role !== 'STAFF' && user?.role !== 'HR_STAFF';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,10 +45,8 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
     e.preventDefault();
     if (!employee) return;
     setIsSubmitting(true);
-    // Chỉ gửi field luong nếu role được phép sửa, tránh bị Backend chặn 403
-    // dù người dùng không hề thay đổi mức lương (input chỉ bị disabled, giá trị cũ vẫn còn trong formData)
-    const payload = canEditSalary ? formData : { ...formData, luong: undefined };
-    await onSave(employee.maNV, payload);
+    // Gửi toàn bộ payload để Backend & DB tự xử lý bảo mật
+    await onSave(employee.maNV, formData);
     setIsSubmitting(false);
   };
 
@@ -78,7 +77,8 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
               <Input id="maPB" name="maPB" value={formData.maPB || ''} onChange={handleChange} className="bg-gray-900 border-gray-800 text-white focus-visible:ring-blue-500" />
             </div>
 
-            {canViewSalary && (
+            {/* Hiển thị luôn ô lương cho HR_STAFF để họ nhập và bị văng lỗi */}
+            {(canViewSalary || user?.role === 'HR_STAFF') && (
               <div className="space-y-2">
                 <Label htmlFor="luong" className="text-gray-300">Mức Lương (VND)</Label>
                 <div className="relative">
@@ -91,9 +91,9 @@ export function EmployeeEditForm({ employee, onClose, onSave }: EmployeeEditForm
                     disabled={!canEditSalary}
                     className={`bg-gray-900 border-gray-800 text-white focus-visible:ring-blue-500 ${!canEditSalary ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
-                  {!canEditSalary && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 flex items-center gap-1 text-xs font-semibold">
-                      <AlertCircle className="w-4 h-4" /> Chỉ Manager được sửa
+                  {user?.role === 'HR_STAFF' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-400 flex items-center gap-1 text-xs font-semibold">
+                      <AlertCircle className="w-4 h-4" /> (Test Database Block)
                     </div>
                   )}
                 </div>

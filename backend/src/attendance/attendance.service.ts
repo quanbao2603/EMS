@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { OracleSecurityService } from '../database/oracle-security.service';
 
 @Injectable()
-export class ProjectsService {
+export class AttendanceService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly oracleSecurityService: OracleSecurityService,
@@ -12,18 +12,18 @@ export class ProjectsService {
   async findAll(user: any): Promise<any[]> {
     const connection = await this.databaseService.getConnection();
     try {
-      // 1. Kích hoạt OLS Policy trên Connection này
+      // Kích hoạt Oracle Security Context
       await this.oracleSecurityService.applySecurityPolicies(connection, user);
 
-      // 2. Truy vấn dữ liệu (OLS sẽ tự động lọc dữ liệu dựa trên nhãn của user)
+      // Truy vấn CSDL
       const sql = `
-        SELECT MaDA "maDA", TenDA "tenDA", NganSach "nganSach", 
-               TO_CHAR(NgayBatDau, 'YYYY-MM-DD') "ngayBatDau", TrangThai "trangThai",
-               LABEL_TO_CHAR(ols_label) as "olsLabel"
-        FROM EMS_ADMIN.DU_AN
+        SELECT MaChamCong "maChamCong", MaNV "maNV", TO_CHAR(NgayLamViec, 'YYYY-MM-DD') "ngayLamViec", TrangThai "trangThai" 
+        FROM EMS_ADMIN.CHAM_CONG
       `;
-      const result = await connection.execute(sql, [], { outFormat: 4002 }); // oracledb.OUT_FORMAT_OBJECT = 4002
+      const result = await connection.execute(sql, [], { outFormat: 4002 /* OBJECT */ });
       return result.rows || [];
+    } catch (error: any) {
+      throw new InternalServerErrorException('Lỗi truy vấn CSDL Oracle: ' + error.message);
     } finally {
       await connection.close();
     }

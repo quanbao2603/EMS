@@ -46,7 +46,15 @@ END;
 /
 
 BEGIN
-    DBMS_RLS.ADD_POLICY('EMS_ADMIN', 'NHAN_VIEN', 'vpd_policy_nhanvien', 'EMS_ADMIN', 'fun_vpd_nhanvien', 'SELECT');
+    DBMS_RLS.ADD_POLICY(
+        object_schema    => 'EMS_ADMIN',
+        object_name      => 'NHAN_VIEN',
+        policy_name      => 'vpd_policy_nhanvien',
+        function_schema  => 'EMS_ADMIN',
+        policy_function  => 'fun_vpd_nhanvien',
+        statement_types  => 'SELECT, INSERT, UPDATE, DELETE',
+        update_check     => TRUE
+    );
 END;
 /
 

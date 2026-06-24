@@ -13,8 +13,22 @@ export class EmployeesController {
     return this.employeesService.findAll(req.user);
   }
 
+  @Get('payroll')
+  async getPayroll(@Req() req: any) {
+    if (req.user.role !== 'ACCOUNTANT') {
+      const { ForbiddenException } = require('@nestjs/common');
+      throw new ForbiddenException('Chỉ Kế toán mới được truy cập Bảng tính lương');
+    }
+    return this.employeesService.findAll(req.user);
+  }
+
   @Put(':id')
   async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
     return this.employeesService.update(id, body, req.user);
+  }
+
+  @Get(':id/salary-history')
+  async getSalaryHistory(@Param('id') id: string, @Req() req: any) {
+    return this.employeesService.getSalaryHistory(id, req.user);
   }
 }

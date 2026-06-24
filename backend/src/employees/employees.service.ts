@@ -30,18 +30,15 @@ export class EmployeesService {
   }
 
   async update(maNV: string, data: any, user: any) {
-    if (data.luong !== undefined && data.luong !== null && user.role !== 'HR_MANAGER') {
-      throw new ForbiddenException('Chỉ HR_MANAGER được phép sửa mức lương.');
-    }
-
     const connection = await this.dbService.getConnection();
     try {
       await this.oracleSecurityService.applySecurityPolicies(connection, user);
 
       // FGA policy FGA_HR_EDIT_NHANVIEN sẽ tự động ghi log nếu Context ROLE = 'HR_STAFF'
+      const hasLuong = data.luong !== undefined && data.luong !== null;
       await connection.execute(
-        `UPDATE NHAN_VIEN SET HoTen = :hoTen, SDT = :sdt, MaPB = :maPB${user.role === 'HR_MANAGER' ? ', Luong = :luong' : ''} WHERE MaNV = :maNV`,
-        user.role === 'HR_MANAGER'
+        `UPDATE NHAN_VIEN SET HoTen = :hoTen, SDT = :sdt, MaPB = :maPB${hasLuong ? ', Luong = :luong' : ''} WHERE MaNV = :maNV`,
+        hasLuong
           ? { hoTen: data.hoTen, sdt: data.sdt, maPB: data.maPB, luong: data.luong, maNV }
           : { hoTen: data.hoTen, sdt: data.sdt, maPB: data.maPB, maNV }
       );
@@ -50,6 +47,32 @@ export class EmployeesService {
       return { message: 'Cập nhật thành công' };
     } catch (error) {
       throw new InternalServerErrorException('Lỗi cập nhật CSDL Oracle: ' + error.message);
+    } finally {
+      await connection.close();
+    }
+  }
+
+  async getSalaryHistory(maNV: string, user: any) {
+    const connection = await this.dbService.getConnection();
+    try {
+      await this.oracleSecurityService.applySecurityPolicies(connection, user);
+
+      const result = await connection.execute(
+        `SELECT l.NgayDoi "ngayDoi",
+                NVL(au.username, l.NguoiThucHien) "nguoiThucHien",
+                l.LuongCu "luongCu",
+                l.LuongMoi "luongMoi"
+         FROM LICH_SU_LUONG l
+         LEFT JOIN APP_USERS au ON au.ID_User = l.NguoiThucHien
+         WHERE l.MaNV = :maNV
+         ORDER BY l.NgayDoi DESC`,
+        { maNV },
+        { outFormat: 4002 /* OBJECT */ }
+      );
+
+      return result.rows || [];
+    } catch (error) {
+      throw new InternalServerErrorException('Lỗi truy vấn lịch sử lương: ' + error.message);
     } finally {
       await connection.close();
     }

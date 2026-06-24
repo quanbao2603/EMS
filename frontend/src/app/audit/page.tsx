@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ShieldCheck, RefreshCw, AlertCircle } from 'lucide-react';
 
+import { SystemAuditLogTable } from '@/components/SystemAuditLogTable';
+
 export default function AuditPage() {
   const { logs, loading, error, refetch } = useAuditLogs();
 
@@ -24,7 +26,7 @@ export default function AuditPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-100 flex items-center gap-3">
             <ShieldCheck className="w-8 h-8 text-blue-500" />
-            Báo cáo Giám sát chỉnh sửa Nhân sự
+            Báo cáo Giám sát & Kiểm toán
           </h1>
           <Button
             variant="outline"
@@ -38,6 +40,7 @@ export default function AuditPage() {
           </Button>
         </div>
 
+        {/* Bảng Audit cũ */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
             <CardTitle className="text-lg text-gray-100">
@@ -89,6 +92,9 @@ export default function AuditPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bảng Kiểm toán FGA và Unified Audit Mới */}
+        <SystemAuditLogTable />
       </div>
     </RoleGuard>
   );

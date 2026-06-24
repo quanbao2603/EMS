@@ -107,4 +107,26 @@ export class AuditService {
       if (connection) await connection.close();
     }
   }
+
+  async getSystemAuditLogs() {
+    let connection;
+    try {
+      connection = await this.dbService.getConnection();
+      const result = await connection.execute(
+        `SELECT EMS_ADMIN.get_audit_logs() AS "json_data" FROM DUAL`,
+        [],
+        { outFormat: 4002 /* OBJECT */ },
+      );
+      
+      const rows = result.rows as any[];
+      if (rows.length > 0 && rows[0].json_data) {
+        return JSON.parse(rows[0].json_data);
+      }
+      return [];
+    } catch (error) {
+      throw new InternalServerErrorException('Lỗi truy vấn System Audit Logs: ' + (error?.message || 'unknown'));
+    } finally {
+      if (connection) await connection.close();
+    }
+  }
 }
