@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { api } from '@/lib/api';
+import axiosClient from '@/utils/axiosClient';
 import { Employee } from '@/types';
 import {
   Table,
@@ -21,7 +21,7 @@ export function PayrollTable() {
   useEffect(() => {
     const fetchPayroll = async () => {
       try {
-        const res = await api.get('/employees/payroll');
+        const res = await axiosClient.get('/employees/payroll');
         setEmployees(res.data);
       } catch (error) {
         console.error('Failed to fetch payroll:', error);
