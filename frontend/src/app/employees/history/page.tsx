@@ -1,29 +1,26 @@
 'use client';
 
+import { useMemo } from 'react';
 import { RoleGuard } from '@/components/RoleGuard';
 import { useChangeHistory } from '@/hooks/useChangeHistory';
 import { useAuthStore } from '@/store/useAuthStore';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { History as HistoryIcon, AlertCircle, RefreshCw } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { ChangeHistoryTable } from '@/components/ChangeHistoryTable';
+import { History as HistoryIcon, RefreshCw, AlertCircle, FileText, Wallet } from 'lucide-react';
 import Link from 'next/link';
-
-const currency = (v: string | null) =>
-  v ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(v)) : '-';
 
 export default function EmployeeHistoryPage() {
   const { user } = useAuthStore();
   const { history, loading, error, refetch } = useChangeHistory();
+
+  const stats = useMemo(() => ({
+    total: history.length,
+    info: history.filter((h) => h.eventType === 'EDIT_INFO').length,
+    salary: history.filter((h) => h.eventType === 'EDIT_SALARY').length,
+  }), [history]);
 
   if (!user) {
     return (
@@ -46,98 +43,40 @@ export default function EmployeeHistoryPage() {
 
   return (
     <RoleGuard allowedRoles={['HR_MANAGER']}>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-100 flex items-center gap-3">
-            <HistoryIcon className="w-8 h-8 text-blue-500" />
-            Lịch sử thay đổi thông tin nhân sự
-          </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refetch}
-            disabled={loading}
-            className="border-gray-700 text-gray-300 hover:bg-gray-800"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Làm mới
-          </Button>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        <PageHeader
+          eyebrow="Lịch sử hệ thống"
+          title="Lịch sử thay đổi thông tin nhân sự"
+          description="Hợp nhất hành động chỉnh sửa thông tin cá nhân và biến động lương."
+          icon={HistoryIcon}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+              className="border-white/10 text-zinc-300 hover:bg-zinc-800/80"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Làm mới
+            </Button>
+          }
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Tổng bản ghi" value={stats.total} icon={HistoryIcon} />
+          <StatCard label="Thông tin cá nhân" value={stats.info} icon={FileText} />
+          <StatCard label="Biến động lương" value={stats.salary} icon={Wallet} />
         </div>
 
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-100">
-              Toàn bộ hành động chỉnh sửa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div className="mb-4 p-4 rounded-md bg-red-950/40 border border-red-800 text-red-300 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium">{error}</p>
-                  <p className="text-sm text-red-400/80 mt-1">
-                    Vui lòng kiểm tra kết nối backend và cấu hình Oracle FGA.
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="rounded-md border border-gray-800 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-800 hover:bg-gray-800/50">
-                    <TableHead className="w-[180px] font-bold text-gray-400">Thời gian</TableHead>
-                    <TableHead className="font-bold text-gray-400">Mã NV</TableHead>
-                    <TableHead className="font-bold text-gray-400">Người thực hiện</TableHead>
-                    <TableHead className="font-bold text-gray-400">Loại thay đổi</TableHead>
-                    <TableHead className="font-bold text-gray-400">Nội dung</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center h-32 text-gray-500">Đang tải...</TableCell>
-                    </TableRow>
-                  ) : history.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center h-32 text-gray-500">
-                        {error ? 'Không thể tải dữ liệu' : 'Chưa có lịch sử thay đổi'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    history.map((item, idx) => (
-                      <TableRow key={`${item.timestamp}-${item.maNV}-${idx}`} className="hover:bg-gray-800/50 border-gray-800">
-                        <TableCell className="text-gray-400 font-mono text-sm">
-                          {format(new Date(item.timestamp), 'dd/MM/yyyy HH:mm:ss')}
-                        </TableCell>
-                        <TableCell className="font-semibold text-gray-200">{item.maNV || '-'}</TableCell>
-                        <TableCell className="text-gray-300">{item.performedBy}</TableCell>
-                        <TableCell>
-                          {item.eventType === 'EDIT_SALARY' ? (
-                            <Badge className="bg-amber-900/50 text-amber-400 border border-amber-800">Lương</Badge>
-                          ) : (
-                            <Badge className="bg-blue-900/50 text-blue-400 border border-blue-800">Thông tin cá nhân</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-gray-300">
-                          {item.eventType === 'EDIT_SALARY' ? (
-                            <span>
-                              <span className="line-through text-gray-500">{currency(item.oldValue ?? null)}</span>
-                              {' → '}
-                              <span className="text-green-400 font-semibold">{currency(item.newValue ?? null)}</span>
-                            </span>
-                          ) : (
-                            item.changeSummary
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {error && (
+          <ErrorBanner
+            message={error}
+            hint="Vui lòng kiểm tra kết nối backend và cấu hình Oracle FGA."
+            className="mb-4"
+          />
+        )}
+        <ChangeHistoryTable history={history} loading={loading} />
       </div>
     </RoleGuard>
   );

@@ -7,8 +7,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import { format } from 'date-fns';
-import { ArrowRight, History } from 'lucide-react';
+import { ArrowRight, History, TrendingUp } from 'lucide-react';
 
 interface SalaryHistoryItem {
   ngayDoi: string;
@@ -57,9 +58,17 @@ export function SalaryHistoryDialog({ maNV, onClose }: SalaryHistoryDialogProps)
 
         <div className="mt-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {loading ? (
-            <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-md bg-gray-900 border border-gray-800 animate-pulse" />
+              ))}
+            </div>
           ) : history.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Chưa có lịch sử thay đổi lương.</p>
+            <EmptyState
+              icon={TrendingUp}
+              title="Chưa có lịch sử thay đổi lương"
+              description="Mọi thay đổi mức lương của nhân viên này sẽ hiển thị tại đây."
+            />
           ) : (
             <div className="relative border-l border-gray-800 ml-3 pl-6 space-y-6">
               {history.map((item, idx) => (
