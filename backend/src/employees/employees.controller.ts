@@ -1,9 +1,11 @@
 import { Controller, Get, Put, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('employees')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
@@ -23,6 +25,7 @@ export class EmployeesController {
   }
 
   @Put(':id')
+  @Roles('HR_STAFF', 'HR_MANAGER')
   async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
     return this.employeesService.update(id, body, req.user);
   }

@@ -36,16 +36,29 @@ export class EmployeesService {
 
       // FGA policy FGA_HR_EDIT_NHANVIEN sẽ tự động ghi log nếu Context ROLE = 'HR_STAFF'
       const hasLuong = data.luong !== undefined && data.luong !== null;
-      await connection.execute(
+      const result = await connection.execute(
         `UPDATE NHAN_VIEN SET HoTen = :hoTen, SDT = :sdt, MaPB = :maPB${hasLuong ? ', Luong = :luong' : ''} WHERE MaNV = :maNV`,
         hasLuong
           ? { hoTen: data.hoTen, sdt: data.sdt, maPB: data.maPB, luong: data.luong, maNV }
           : { hoTen: data.hoTen, sdt: data.sdt, maPB: data.maPB, maNV }
       );
-      await connection.commit();
 
+      // VPD policy fun_vpd_nhanvien_dml lọc ngầm: nếu dòng nằm ngoài phạm vi được
+      // phép sửa (ví dụ HR_STAFF đụng vào người phòng HR) -> Oracle trả 0 rows,
+      // KHÔNG báo lỗi. Phải tự kiểm tra rowsAffected để báo đúng cho người dùng.
+      if (!result.rowsAffected) {
+        await connection.rollback();
+        throw new ForbiddenException('Bạn không có quyền chỉnh sửa nhân viên này (ngoài phạm vi VPD cho phép).');
+      }
+
+      await connection.commit();
       return { message: 'Cập nhật thành công' };
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof ForbiddenException) throw error;
+      // Trigger trg_block_salary_edit chặn sửa Lương -> raise ORA-20403
+      if (error?.errorNum === 20403 || /ORA-20403/.test(error?.message || '')) {
+        throw new ForbiddenException('Chỉ HR_MANAGER được phép sửa mức lương.');
+      }
       throw new InternalServerErrorException('Lỗi cập nhật CSDL Oracle: ' + error.message);
     } finally {
       await connection.close();
