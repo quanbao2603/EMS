@@ -1,100 +1,56 @@
 'use client';
 
+import { useMemo } from 'react';
 import { RoleGuard } from '@/components/RoleGuard';
-import { useAuditLogs } from '@/hooks/useAuditLogs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuditMonitoring } from '@/hooks/useAuditMonitoring';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { ShieldCheck, RefreshCw, AlertCircle } from 'lucide-react';
-
-import { SystemAuditLogTable } from '@/components/SystemAuditLogTable';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { AuditMonitoringTable } from '@/components/AuditMonitoringTable';
+import { ShieldCheck, RefreshCw, Users, FileSearch, AlertTriangle } from 'lucide-react';
 
 export default function AuditPage() {
-  const { logs, loading, error, refetch } = useAuditLogs();
+  const { rows, loading, error, refetch } = useAuditMonitoring();
+
+  const stats = useMemo(() => {
+    const performers = new Set(rows.map((r) => r.performedBy));
+    const employees = new Set(rows.map((r) => r.maNV).filter(Boolean));
+    const warnings = rows.filter((r) => r.status && /thất bại|cảnh báo|fail/i.test(r.status)).length;
+    return { total: rows.length, performers: performers.size, employees: employees.size, warnings };
+  }, [rows]);
 
   return (
     <RoleGuard allowedRoles={['HR_MANAGER']}>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-100 flex items-center gap-3">
-            <ShieldCheck className="w-8 h-8 text-blue-500" />
-            Báo cáo Giám sát & Kiểm toán
-          </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refetch}
-            disabled={loading}
-            className="border-gray-700 text-gray-300 hover:bg-gray-800"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Làm mới
-          </Button>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        <PageHeader
+          eyebrow="Giám sát FGA"
+          title="Báo cáo Giám sát & Kiểm toán"
+          description="Hợp nhất giám sát FGA và kiểm toán hệ thống — một dòng cho mỗi hành động HR."
+          icon={ShieldCheck}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+              className="border-white/10 text-zinc-300 hover:bg-zinc-800/80"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Làm mới
+            </Button>
+          }
+        />
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="Tổng bản ghi" value={stats.total} icon={FileSearch} />
+          <StatCard label="Nhân viên HR thực hiện" value={stats.performers} icon={Users} />
+          <StatCard label="Nhân sự bị tác động" value={stats.employees} icon={ShieldCheck} />
+          <StatCard label="Cảnh báo / lỗi" value={stats.warnings} icon={AlertTriangle} />
         </div>
 
-        {/* Bảng Audit cũ */}
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-100">
-              Các thay đổi thông tin cá nhân do Nhân viên phòng HR thực hiện
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div className="mb-4 p-4 rounded-md bg-red-950/40 border border-red-800 text-red-300 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <p className="font-medium">{error}</p>
-              </div>
-            )}
-            <div className="rounded-md border border-gray-800 overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-gray-800 hover:bg-gray-800/50">
-                    <TableHead className="w-[180px] font-bold text-gray-400">Thời gian</TableHead>
-                    <TableHead className="font-bold text-gray-400">Mã NV</TableHead>
-                    <TableHead className="font-bold text-gray-400">Người thực hiện</TableHead>
-                    <TableHead className="font-bold text-gray-400">Nội dung thay đổi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center h-32 text-gray-500">Đang tải...</TableCell>
-                    </TableRow>
-                  ) : logs.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center h-32 text-gray-500">
-                        {error ? 'Không thể tải dữ liệu' : 'Chưa có bản ghi giám sát'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    logs.map((log, idx) => (
-                      <TableRow key={`${log.timestamp}-${log.maNV}-${idx}`} className="hover:bg-gray-800/50 border-gray-800">
-                        <TableCell className="text-gray-400 text-sm">
-                          {format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm:ss')}
-                        </TableCell>
-                        <TableCell className="font-semibold text-gray-200">{log.maNV || '-'}</TableCell>
-                        <TableCell className="text-gray-300">{log.performedBy}</TableCell>
-                        <TableCell className="text-gray-300">{log.changeSummary}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bảng Kiểm toán FGA và Unified Audit Mới */}
-        <SystemAuditLogTable />
+        {error && <ErrorBanner message={error} className="mb-4" />}
+        <AuditMonitoringTable rows={rows} loading={loading} />
       </div>
     </RoleGuard>
   );

@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { MobileHeader } from "@/components/MobileHeader";
 import { AuthHydrator } from "@/components/AuthHydrator";
+import { AppBackdrop } from "@/components/layout/app-backdrop";
 
-const inter = Inter({ subsets: ["latin"] });
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Hệ thống Quản lý Nhân sự (EMS)",
@@ -19,12 +24,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-50 antialiased h-screen flex overflow-hidden`}>
+      <body className={`${beVietnamPro.className} bg-zinc-950 text-zinc-50 antialiased h-screen flex overflow-hidden`}>
         <AuthHydrator />
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-gray-950">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <MobileHeader />
+          <main className="relative flex-1 overflow-y-auto bg-zinc-950">
+            <AppBackdrop />
+            <div className="relative z-10">{children}</div>
+          </main>
+        </div>
         <Toaster theme="dark" richColors position="top-right" />
       </body>
     </html>

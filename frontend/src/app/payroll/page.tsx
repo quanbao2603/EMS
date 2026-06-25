@@ -1,15 +1,17 @@
 import { PayrollTable } from '@/components/PayrollTable';
 import { RoleGuard } from '@/components/RoleGuard';
+import { PageHeader } from '@/components/ui/page-header';
+import { Wallet } from 'lucide-react';
 
 export default function PayrollPage() {
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-100">Bảng tính lương</h1>
-          <p className="text-gray-400 mt-2 text-sm">Hiển thị dữ liệu lương đã được lọc và che mờ (Redaction) theo quyền hạn Kế toán.</p>
-        </div>
-      </div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        eyebrow="Kế toán"
+        title="Bảng tính lương"
+        description="Hiển thị dữ liệu lương đã được lọc và che mờ (Redaction) theo quyền hạn Kế toán."
+        icon={Wallet}
+      />
       <RoleGuard allowedRoles={['ACCOUNTANT']}>
         <PayrollTable />
       </RoleGuard>
