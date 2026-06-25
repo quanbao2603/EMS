@@ -75,8 +75,8 @@ export class EmployeesService {
                 NVL(au.username, l.NguoiThucHien) "nguoiThucHien",
                 l.LuongCu "luongCu",
                 l.LuongMoi "luongMoi"
-         FROM LICH_SU_LUONG l
-         LEFT JOIN APP_USERS au ON au.ID_User = l.NguoiThucHien
+         FROM EMS_ADMIN.LICH_SU_LUONG l
+         LEFT JOIN EMS_ADMIN.APP_USERS au ON au.ID_User = l.NguoiThucHien
          WHERE l.MaNV = :maNV
          ORDER BY l.NgayDoi DESC`,
         { maNV },

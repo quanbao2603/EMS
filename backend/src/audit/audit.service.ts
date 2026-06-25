@@ -14,7 +14,7 @@ export class AuditService {
         `SELECT log_time "timestamp", real_user_name "performedBy",
                 REPLACE(DBMS_LOB.SUBSTR(sql_text, 4000, 1), CHR(0), '') "detailSql",
                 REPLACE(DBMS_LOB.SUBSTR(sql_binds, 4000, 1), CHR(0), '') "detailBinds"
-         FROM VW_AUDIT_HR_EDITS ORDER BY log_time DESC`,
+         FROM EMS_ADMIN.VW_AUDIT_HR_EDITS ORDER BY log_time DESC`,
         [],
         { outFormat: 4002 /* OBJECT */ },
       );
@@ -56,7 +56,7 @@ export class AuditService {
              REPLACE(DBMS_LOB.SUBSTR(f.sql_binds, 4000, 1), CHR(0), '') AS detail_binds,
              NULL AS old_value,
              NULL AS new_value
-           FROM VW_AUDIT_HR_EDITS f
+           FROM EMS_ADMIN.VW_AUDIT_HR_EDITS f
            UNION ALL
            SELECT
              l.NgayDoi,
@@ -67,8 +67,8 @@ export class AuditService {
              NULL,
              TO_CHAR(l.LuongCu),
              TO_CHAR(l.LuongMoi)
-           FROM LICH_SU_LUONG l
-           LEFT JOIN APP_USERS au ON au.ID_User = l.NguoiThucHien
+           FROM EMS_ADMIN.LICH_SU_LUONG l
+           LEFT JOIN EMS_ADMIN.APP_USERS au ON au.ID_User = l.NguoiThucHien
          )
          ORDER BY event_time DESC`,
         [],
