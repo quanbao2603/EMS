@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { api } from '@/lib/api';
+import axiosClient from '@/utils/axiosClient';
 import {
   Table,
   TableBody,
@@ -28,7 +28,7 @@ export function AttendanceTable() {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const res = await api.get('/attendance');
+        const res = await axiosClient.get('/attendance');
         setRecords(res.data);
       } catch (error) {
         console.error('Failed to fetch attendance:', error);
