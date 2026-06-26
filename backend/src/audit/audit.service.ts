@@ -113,17 +113,21 @@ export class AuditService {
     try {
       connection = await this.dbService.getConnection();
       const result = await connection.execute(
-        `SELECT EMS_ADMIN.get_audit_logs() AS "json_data" FROM DUAL`,
+        `SELECT TO_CHAR(thoi_gian_thuc_hien, 'YYYY-MM-DD HH24:MI:SS') "thoi_gian_thuc_hien",
+                nguoi_thuc_hien "nguoi_thuc_hien",
+                bang_tac_dong "bang_tac_dong",
+                loai_hanh_dong "loai_hanh_dong",
+                cau_lenh_sql "cau_lenh_sql",
+                du_lieu_thay_doi "du_lieu_thay_doi",
+                ten_chinh_sach "ten_chinh_sach",
+                trang_thai "trang_thai"
+         FROM EMS_ADMIN.VW_HR_AUDIT_LOG
+         ORDER BY thoi_gian_thuc_hien DESC`,
         [],
         { outFormat: 4002 /* OBJECT */ },
       );
-      
-      const rows = result.rows as any[];
-      if (rows.length > 0 && rows[0].json_data) {
-        return JSON.parse(rows[0].json_data);
-      }
-      return [];
-    } catch (error) {
+      return result.rows || [];
+    } catch (error: any) {
       throw new InternalServerErrorException('Lỗi truy vấn System Audit Logs: ' + (error?.message || 'unknown'));
     } finally {
       if (connection) await connection.close();

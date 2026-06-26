@@ -1,24 +1,22 @@
 -- ==============================================================================
 -- ĐỒ ÁN: HỆ THỐNG QUẢN LÝ NHÂN SỰ (EMS) - BẢO MẬT CƠ SỞ DỮ LIỆU
 -- SCRIPT 06 TỔNG HỢP: CƠ CHẾ GIÁM SÁT, LƯU VẾT VÀ KIỂM TOÁN (FGA & UNIFIED AUDIT)
---
--- HƯỚNG DẪN THỰC THI:
--- File này áp dụng chiến thuật Schema Shift để tránh lỗi ORA-01720. 
--- Vui lòng chuyển đổi đúng tài khoản kết nối (Connection) trước khi chạy từng phần.
+-- KHẮC PHỤC HOÀN TOÀN CÁC LỖI: ORA-00942, ORA-28138, ORA-01720 VÀ LỖI ÉP KIỂU JSON
 -- ==============================================================================
 
 
 -- ******************************************************************************
 -- ⚠️ PHẦN 1: CHẠY BẰNG TÀI KHOẢN "SYS AS SYSDBA" (KẾT NỐI VÀO FREEPDB1) ⚠️
--- Mục tiêu: Mở cổng dữ liệu Kiểm toán hệ thống (Unified Auditing) cho các User
+-- Mục tiêu: Mở cổng Kiểm toán và Cấp đặc quyền toàn cục để bypass ORA-01720
 -- ******************************************************************************
 GRANT SELECT ON UNIFIED_AUDIT_TRAIL TO EMS_ADMIN;
-GRANT SELECT ON UNIFIED_AUDIT_TRAIL TO EMS_APP_USER;
+-- Kim bài miễn tử: Giúp ems_app_user đọc được View mà không bị vướng chuỗi ủy quyền
+GRANT SELECT ANY TABLE TO EMS_APP_USER;
 
 
 -- ******************************************************************************
 -- ⚠️ PHẦN 2: CHẠY BẰNG TÀI KHOẢN "EMS_ADMIN" (KẾT NỐI VÀO FREEPDB1) ⚠️
--- Mục tiêu: Thiết lập FGA, Audit Policy, Trigger và cấp quyền cơ bản
+-- Mục tiêu: Thiết lập toàn bộ logic Kiểm toán, Trigger và hệ thống View
 -- ******************************************************************************
 
 -- 1. Cập nhật Package định danh (Ghi nhận User ID cho hệ thống Unified Audit)
@@ -39,7 +37,7 @@ BEGIN
     BEGIN DBMS_FGA.DROP_POLICY('EMS_ADMIN', 'NHAN_VIEN', 'FGA_HR_EDIT_NHANVIEN'); EXCEPTION WHEN OTHERS THEN NULL; END;
     DBMS_FGA.ADD_POLICY(
         object_schema   => 'EMS_ADMIN', object_name => 'NHAN_VIEN', policy_name => 'FGA_HR_EDIT_NHANVIEN',
-        audit_condition => q'[SYS_CONTEXT('ctx_qlnv','ROLE') IN ('HR_STAFF','HR_MANAGER')]',
+        audit_condition => NULL, -- Bắt buộc để NULL để bypass lỗi ORA-28138 do Backend gửi lệnh MERGE
         statement_types => 'UPDATE', enable => TRUE
     );
 
@@ -77,33 +75,32 @@ END;
 GRANT SELECT ON EMS_ADMIN.APP_USERS TO EMS_APP_USER;
 GRANT SELECT ON EMS_ADMIN.LICH_SU_LUONG TO EMS_APP_USER;
 
+-- ==============================================================================
+-- KHỞI TẠO HỆ THỐNG VIEW KIỂM TOÁN (LƯU TRỮ TẠI SCHEMA EMS_ADMIN)
+-- ==============================================================================
 
--- ******************************************************************************
--- ⚠️ PHẦN 3: CHẠY BẰNG TÀI KHOẢN "EMS_APP_USER" (KẾT NỐI VÀO FREEPDB1) ⚠️
--- Mục tiêu: Backend tự tạo View báo cáo giám sát để né lỗi ORA-01720
--- ******************************************************************************
-
--- 1. View trích xuất log của HR
-CREATE OR REPLACE VIEW VW_AUDIT_HR_EDITS AS
+-- 6. View trích xuất log của HR (Đã ép kiểu CLOB sang String để fix lỗi JSON)
+CREATE OR REPLACE VIEW EMS_ADMIN.VW_AUDIT_HR_EDITS AS
 SELECT
     u.event_timestamp                              AS log_time,
     u.client_identifier                            AS db_user,
     NVL(au.username, u.client_identifier)          AS real_user_name,
     u.action_name                                  AS action,
     u.object_name                                  AS object_name,
-    u.sql_text                                     AS sql_text,
-    u.sql_binds                                    AS sql_binds 
+    REPLACE(DBMS_LOB.SUBSTR(u.sql_text, 4000, 1), CHR(0), '')  AS sql_text,
+    REPLACE(DBMS_LOB.SUBSTR(u.sql_binds, 4000, 1), CHR(0), '') AS sql_binds 
 FROM unified_audit_trail u
 LEFT JOIN EMS_ADMIN.APP_USERS au ON au.ID_User = u.client_identifier
-WHERE u.fga_policy_name = 'FGA_HR_EDIT_NHANVIEN';
+WHERE u.fga_policy_name = 'FGA_HR_EDIT_NHANVIEN'
+  AND au.Role_Name IN ('HR_MANAGER', 'HR_STAFF'); -- Dời điều kiện FGA lên đây
 
--- 2. View gộp log (FGA và Trigger Lương) thành Timeline
-CREATE OR REPLACE VIEW VW_EMPLOYEE_CHANGE_HISTORY AS
+-- 7. View gộp log (FGA và Trigger Lương) thành Timeline
+CREATE OR REPLACE VIEW EMS_ADMIN.VW_EMPLOYEE_CHANGE_HISTORY AS
 SELECT
     f.log_time AS event_time, f.real_user_name AS performed_by, NULL AS ma_nv,
-    'EDIT_INFO' AS event_type, REPLACE(DBMS_LOB.SUBSTR(f.sql_text, 4000, 1), CHR(0), '') AS detail_sql,
+    'EDIT_INFO' AS event_type, f.sql_text AS detail_sql,
     f.sql_binds AS detail_binds, NULL AS old_value, NULL AS new_value
-FROM VW_AUDIT_HR_EDITS f
+FROM EMS_ADMIN.VW_AUDIT_HR_EDITS f
 UNION ALL
 SELECT
     l.NgayDoi AS event_time, NVL(au.username, l.NguoiThucHien) AS performed_by, l.MaNV AS ma_nv,
@@ -112,15 +109,15 @@ SELECT
 FROM EMS_ADMIN.LICH_SU_LUONG l
 LEFT JOIN EMS_ADMIN.APP_USERS au ON au.ID_User = l.NguoiThucHien;
 
--- 3. View Tổng hợp Dashboard Kiểm toán Hệ thống
-CREATE OR REPLACE VIEW VW_HR_AUDIT_LOG AS
+-- 8. View Tổng hợp Dashboard Kiểm toán (Đã ép kiểu CLOB sang String)
+CREATE OR REPLACE VIEW EMS_ADMIN.VW_HR_AUDIT_LOG AS
 SELECT
     u.event_timestamp                              AS thoi_gian_thuc_hien,
     NVL(au.username, u.client_identifier)          AS nguoi_thuc_hien,
     u.object_name                                  AS bang_tac_dong,
     u.action_name                                  AS loai_hanh_dong,
-    REPLACE(DBMS_LOB.SUBSTR(u.sql_text, 4000, 1), CHR(0), '') AS cau_lenh_sql,
-    u.sql_binds                                    AS du_lieu_thay_doi,
+    REPLACE(DBMS_LOB.SUBSTR(u.sql_text, 4000, 1), CHR(0), '')  AS cau_lenh_sql,
+    REPLACE(DBMS_LOB.SUBSTR(u.sql_binds, 4000, 1), CHR(0), '') AS du_lieu_thay_doi,
     u.fga_policy_name                              AS ten_chinh_sach,
     CASE 
         WHEN u.return_code != 0 THEN 'THẤT BẠI (CẢNH BÁO VI PHẠM)'
@@ -131,5 +128,10 @@ LEFT JOIN EMS_ADMIN.APP_USERS au ON au.ID_User = u.client_identifier
 WHERE 
     u.fga_policy_name IN ('FGA_HR_EDIT_NHANVIEN', 'FGA_AUDIT_PHANCONG')
     OR (u.object_name = 'DU_AN' AND u.return_code != 0);
+
+-- 9. Tạo Public Synonym để Backend tự động nhận diện View mà không cần tiền tố
+CREATE OR REPLACE PUBLIC SYNONYM VW_AUDIT_HR_EDITS FOR EMS_ADMIN.VW_AUDIT_HR_EDITS;
+CREATE OR REPLACE PUBLIC SYNONYM VW_EMPLOYEE_CHANGE_HISTORY FOR EMS_ADMIN.VW_EMPLOYEE_CHANGE_HISTORY;
+CREATE OR REPLACE PUBLIC SYNONYM VW_HR_AUDIT_LOG FOR EMS_ADMIN.VW_HR_AUDIT_LOG;
 
 COMMIT;

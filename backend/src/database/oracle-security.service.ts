@@ -22,8 +22,8 @@ export class OracleSecurityService {
 
     // 2. Thiết lập Nhãn bảo mật (OLS)
     let label = 'PUB';
-    if (['HR_MANAGER', 'MANAGER'].includes(user.role)) label = 'SEC';
-    else if (['HR_STAFF', 'ACCOUNTANT'].includes(user.role)) label = 'CONF';
+    if (user.role === 'HR_MANAGER') label = 'SEC';
+    else if (['MANAGER', 'ACCOUNTANT', 'HR_STAFF'].includes(user.role)) label = 'CONF';
 
     try {
       await connection.execute(
